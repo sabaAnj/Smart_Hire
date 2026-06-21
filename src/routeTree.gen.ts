@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as JobsJobIdRouteImport } from './routes/jobs.$jobId'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedJobsNewRouteImport } from './routes/_authenticated/jobs.new'
+import { Route as AuthenticatedJobsJobIdPipelineRouteImport } from './routes/_authenticated/jobs.$jobId.pipeline'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -45,6 +46,12 @@ const AuthenticatedJobsNewRoute = AuthenticatedJobsNewRouteImport.update({
   path: '/jobs/new',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedJobsJobIdPipelineRoute =
+  AuthenticatedJobsJobIdPipelineRouteImport.update({
+    id: '/jobs/$jobId/pipeline',
+    path: '/jobs/$jobId/pipeline',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -52,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/jobs/new': typeof AuthenticatedJobsNewRoute
+  '/jobs/$jobId/pipeline': typeof AuthenticatedJobsJobIdPipelineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/jobs/new': typeof AuthenticatedJobsNewRoute
+  '/jobs/$jobId/pipeline': typeof AuthenticatedJobsJobIdPipelineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -68,12 +77,25 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/jobs/$jobId': typeof JobsJobIdRoute
   '/_authenticated/jobs/new': typeof AuthenticatedJobsNewRoute
+  '/_authenticated/jobs/$jobId/pipeline': typeof AuthenticatedJobsJobIdPipelineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/dashboard' | '/jobs/$jobId' | '/jobs/new'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/jobs/$jobId'
+    | '/jobs/new'
+    | '/jobs/$jobId/pipeline'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/jobs/$jobId' | '/jobs/new'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/jobs/$jobId'
+    | '/jobs/new'
+    | '/jobs/$jobId/pipeline'
   id:
     | '__root__'
     | '/'
@@ -82,6 +104,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/jobs/$jobId'
     | '/_authenticated/jobs/new'
+    | '/_authenticated/jobs/$jobId/pipeline'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -135,17 +158,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobsNewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/jobs/$jobId/pipeline': {
+      id: '/_authenticated/jobs/$jobId/pipeline'
+      path: '/jobs/$jobId/pipeline'
+      fullPath: '/jobs/$jobId/pipeline'
+      preLoaderRoute: typeof AuthenticatedJobsJobIdPipelineRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedJobsNewRoute: typeof AuthenticatedJobsNewRoute
+  AuthenticatedJobsJobIdPipelineRoute: typeof AuthenticatedJobsJobIdPipelineRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedJobsNewRoute: AuthenticatedJobsNewRoute,
+  AuthenticatedJobsJobIdPipelineRoute: AuthenticatedJobsJobIdPipelineRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
