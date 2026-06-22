@@ -34,7 +34,10 @@ function Index() {
   const { q, type, loc } = Route.useSearch();
   const navigate = Route.useNavigate();
   const setParam = (patch: Partial<{ q: string; type: string; loc: string }>) =>
-    navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
+    navigate({
+      search: (prev: { q: string; type: string; loc: string }) => ({ ...prev, ...patch }),
+      replace: true,
+    });
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["public-jobs"],
