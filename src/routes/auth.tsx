@@ -23,7 +23,7 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!loading && user) navigate({ to: "/dashboard" });
+    if (!loading && user) navigate({ to: "/profile" });
   }, [user, loading, navigate]);
 
   const signIn = async (e: React.FormEvent) => {
@@ -32,7 +32,10 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) toast.error(error.message);
-    else navigate({ to: "/dashboard" });
+    else {
+      toast.success("Welcome back!");
+      navigate({ to: "/profile" });
+    }
   };
 
   const signUp = async (e: React.FormEvent) => {
@@ -42,13 +45,16 @@ function AuthPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/profile`,
         data: { full_name: fullName },
       },
     });
     setBusy(false);
     if (error) toast.error(error.message);
-    else toast.success("Account created — you're signed in.");
+    else {
+      toast.success("Account created — welcome to Hireflow!");
+      navigate({ to: "/profile" });
+    }
   };
 
   return (
