@@ -31,6 +31,9 @@ export function SiteHeader() {
               <Link to="/interviews" className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
                 Interviews
               </Link>
+              <Link to="/profile" className="rounded-md px-3 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                Profile
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"

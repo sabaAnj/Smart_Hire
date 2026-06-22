@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, ArrowRight, Sparkles, GitBranch, CalendarCheck } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, ArrowRight, Sparkles, GitBranch, CalendarCheck, Search } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,6 +22,10 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [q, setQ] = useState("");
+  const [type, setType] = useState<string>("all");
+  const [loc, setLoc] = useState("");
+
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["public-jobs"],
     queryFn: async () => {
@@ -31,6 +38,18 @@ function Index() {
       return data ?? [];
     },
   });
+
+  const filtered = useMemo(() => {
+    const ql = q.trim().toLowerCase();
+    const ll = loc.trim().toLowerCase();
+    return jobs.filter((j) => {
+      if (type !== "all" && j.employment_type !== type) return false;
+      if (ll && !(j.location ?? "").toLowerCase().includes(ll)) return false;
+      if (!ql) return true;
+      const hay = `${j.title} ${(j.required_skills ?? []).join(" ")}`.toLowerCase();
+      return hay.includes(ql);
+    });
+  }, [jobs, q, type, loc]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,19 +82,47 @@ function Index() {
             <p className="text-sm text-muted-foreground">Apply in under a minute. We'll use AI to surface the best fits to our team.</p>
           </div>
         </div>
+        <div className="mb-6 grid gap-2 sm:grid-cols-[1fr_180px_180px]">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search title or skill (e.g. React, design)…"
+              className="pl-9"
+            />
+          </div>
+          <Input
+            value={loc}
+            onChange={(e) => setLoc(e.target.value)}
+            placeholder="Location"
+          />
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any type</SelectItem>
+              <SelectItem value="full_time">Full-time</SelectItem>
+              <SelectItem value="part_time">Part-time</SelectItem>
+              <SelectItem value="contract">Contract</SelectItem>
+              <SelectItem value="internship">Internship</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {isLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
             ))}
           </div>
-        ) : jobs.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center">
-            <p className="text-sm text-muted-foreground">No open roles right now. Check back soon.</p>
+            <p className="text-sm text-muted-foreground">
+              {jobs.length === 0 ? "No open roles right now. Check back soon." : "No roles match those filters."}
+            </p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {jobs.map((j) => (
+            {filtered.map((j) => (
               <Link
                 key={j.id}
                 to="/jobs/$jobId"
