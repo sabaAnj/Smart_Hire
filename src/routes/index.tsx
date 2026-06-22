@@ -1,13 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, ArrowRight, Sparkles, GitBranch, CalendarCheck, Search } from "lucide-react";
+
+const searchSchema = z.object({
+  q: fallback(z.string(), "").default(""),
+  loc: fallback(z.string(), "").default(""),
+  type: fallback(z.string(), "all").default("all"),
+});
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -18,13 +26,15 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Browse open roles and apply." },
     ],
   }),
+  validateSearch: zodValidator(searchSchema),
   component: Index,
 });
 
 function Index() {
-  const [q, setQ] = useState("");
-  const [type, setType] = useState<string>("all");
-  const [loc, setLoc] = useState("");
+  const { q, type, loc } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const setParam = (patch: Partial<{ q: string; type: string; loc: string }>) =>
+    navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });
 
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["public-jobs"],
@@ -50,6 +60,10 @@ function Index() {
       return hay.includes(ql);
     });
   }, [jobs, q, type, loc]);
+
+  const hasFilters = q.trim() !== "" || loc.trim() !== "" || type !== "all";
+  const noMatches = !isLoading && filtered.length === 0 && jobs.length > 0;
+  const display = noMatches ? jobs : filtered;
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,23 +95,32 @@ function Index() {
             <h2 className="text-2xl font-semibold tracking-tight">Open roles</h2>
             <p className="text-sm text-muted-foreground">Apply in under a minute. We'll use AI to surface the best fits to our team.</p>
           </div>
+          {hasFilters && (
+            <button
+              type="button"
+              onClick={() => navigate({ search: { q: "", loc: "", type: "all" }, replace: true })}
+              className="text-xs text-muted-foreground underline hover:text-foreground"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
         <div className="mb-6 grid gap-2 sm:grid-cols-[1fr_180px_180px]">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => setParam({ q: e.target.value })}
               placeholder="Search title or skill (e.g. React, design)…"
               className="pl-9"
             />
           </div>
           <Input
             value={loc}
-            onChange={(e) => setLoc(e.target.value)}
+            onChange={(e) => setParam({ loc: e.target.value })}
             placeholder="Location"
           />
-          <Select value={type} onValueChange={setType}>
+          <Select value={type} onValueChange={(v) => setParam({ type: v })}>
             <SelectTrigger><SelectValue placeholder="Any type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Any type</SelectItem>
@@ -108,21 +131,24 @@ function Index() {
             </SelectContent>
           </Select>
         </div>
+        {noMatches && (
+          <div className="mb-4 rounded-md border border-dashed border-border bg-accent/30 p-3 text-sm text-muted-foreground">
+            No exact matches for your filters — showing all open roles instead.
+          </div>
+        )}
         {isLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="h-36 animate-pulse rounded-lg border border-border bg-card" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : display.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              {jobs.length === 0 ? "No open roles right now. Check back soon." : "No roles match those filters."}
-            </p>
+            <p className="text-sm text-muted-foreground">No open roles right now. Check back soon.</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((j) => (
+            {display.map((j) => (
               <Link
                 key={j.id}
                 to="/jobs/$jobId"
