@@ -154,7 +154,7 @@ export type Database = {
       jobs: {
         Row: {
           created_at: string
-          created_by: string
+          created_by: string | null
           description: string
           employment_type: Database["public"]["Enums"]["employment_type"]
           id: string
@@ -166,7 +166,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          created_by: string
+          created_by?: string | null
           description?: string
           employment_type?: Database["public"]["Enums"]["employment_type"]
           id?: string
@@ -178,7 +178,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          created_by?: string
+          created_by?: string | null
           description?: string
           employment_type?: Database["public"]["Enums"]["employment_type"]
           id?: string
