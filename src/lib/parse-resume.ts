@@ -12,6 +12,7 @@ export async function extractResumeText(file: File): Promise<string> {
 
 async function extractPdfText(file: File): Promise<string> {
   // Lazy import so the PDF engine never enters the SSR bundle.
+  // @ts-expect-error - no bundled types for the ESM build path
   const pdfjs: any = await import("pdfjs-dist/build/pdf.mjs");
   // Use a CDN-hosted worker matching the installed version.
   const workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
