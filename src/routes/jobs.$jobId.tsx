@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MapPin, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, MapPin, CheckCircle2, Upload, Loader2 } from "lucide-react";
+import { extractResumeText } from "@/lib/parse-resume";
 
 export const Route = createFileRoute("/jobs/$jobId")({
   component: JobDetail,
@@ -38,6 +39,28 @@ function JobDetail() {
   const { jobId } = Route.useParams();
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ full_name: "", email: "", phone: "", resume_text: "" });
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [parsing, setParsing] = useState(false);
+
+  const onFile = async (file: File | null) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File too large. Max 5 MB.");
+      return;
+    }
+    setParsing(true);
+    try {
+      const text = await extractResumeText(file);
+      if (!text.trim()) throw new Error("Couldn't extract any text from this file.");
+      setForm((f) => ({ ...f, resume_text: text.slice(0, 20000) }));
+      setFileName(file.name);
+      toast.success(`Loaded ${file.name}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to read file");
+    } finally {
+      setParsing(false);
+    }
+  };
 
   const { data: job, isLoading } = useQuery({
     queryKey: ["job", jobId],
@@ -143,6 +166,20 @@ function JobDetail() {
                   </div>
                   <div className="grid gap-1.5">
                     <Label htmlFor="resume_text">Paste your resume</Label>
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium hover:bg-accent">
+                        {parsing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        {parsing ? "Reading…" : "Upload resume file"}
+                        <input
+                          type="file"
+                          accept=".pdf,.txt,.md,application/pdf,text/plain,text/markdown"
+                          className="hidden"
+                          onChange={(e) => onFile(e.target.files?.[0] ?? null)}
+                        />
+                      </label>
+                      {fileName && <span className="text-xs text-muted-foreground">{fileName}</span>}
+                      <span className="text-xs text-muted-foreground">or paste below</span>
+                    </div>
                     <Textarea id="resume_text" required rows={10} maxLength={20000} placeholder="Paste your resume as plain text…" value={form.resume_text} onChange={(e) => setForm({ ...form, resume_text: e.target.value })} />
                     <p className="text-xs text-muted-foreground">We use AI to extract your skills and experience for the recruiter.</p>
                   </div>
