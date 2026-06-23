@@ -96,9 +96,5 @@ npm run dev
 - Email Notifications
 - Candidate Scoring
 
-## Author
-
-**Saba Anjum**
-
 GitHub:
 https://github.com/sabaAnj
